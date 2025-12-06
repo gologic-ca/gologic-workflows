@@ -1,0 +1,64 @@
+name: Maven Unit Tests
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: 'Java version to use'
+        required: false
+        type: string
+        default: '17'
+      java-distribution:
+        description: 'Java distribution to use'
+        required: false
+        type: string
+        default: 'temurin'
+      maven-version:
+        description: 'Maven version to use'
+        required: false
+        type: string
+        default: '3.9.6'
+      working-directory:
+        description: 'Working directory for the tests'
+        required: false
+        type: string
+        default: '.'
+      maven-args:
+        description: 'Additional Maven arguments'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK ${{ inputs.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: ${{ inputs.java-distribution }}
+          cache: 'maven'
+      
+      - name: Set up Maven
+        uses: stCarolas/setup-maven@v5
+        with:
+          maven-version: ${{ inputs.maven-version }}
+      
+      - name: Run tests with Maven
+        working-directory: ${{ inputs.working-directory }}
+        run: mvn test ${{ inputs.maven-args }}
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maven-test-results
+          path: |
+            ${{ inputs.working-directory }}/target/surefire-reports/
+            ${{ inputs.working-directory }}/target/failsafe-reports/
+          retention-days: 7
