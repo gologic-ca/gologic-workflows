@@ -1,0 +1,68 @@
+name: Gradle Build
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: 'Java version to use'
+        required: false
+        type: string
+        default: '17'
+      java-distribution:
+        description: 'Java distribution to use'
+        required: false
+        type: string
+        default: 'temurin'
+      gradle-version:
+        description: 'Gradle version to use (leave empty for wrapper)'
+        required: false
+        type: string
+        default: ''
+      working-directory:
+        description: 'Working directory for the build'
+        required: false
+        type: string
+        default: '.'
+      gradle-args:
+        description: 'Additional Gradle arguments'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK ${{ inputs.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: ${{ inputs.java-distribution }}
+      
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: ${{ inputs.gradle-version }}
+      
+      - name: Build with Gradle
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          if [ -f "gradlew" ]; then
+            chmod +x gradlew
+            ./gradlew build -x test ${{ inputs.gradle-args }}
+          else
+            gradle build -x test ${{ inputs.gradle-args }}
+          fi
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build-artifacts
+          path: |
+            ${{ inputs.working-directory }}/build/libs/
+            ${{ inputs.working-directory }}/build/distributions/
+          retention-days: 7
