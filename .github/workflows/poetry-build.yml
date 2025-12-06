@@ -54,16 +54,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ inputs.working-directory }}/.venv
-          key: venv-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          key: venv-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles(format('{0}/poetry.lock', inputs.working-directory)) }}
       
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         working-directory: ${{ inputs.working-directory }}
-        run: poetry install --no-interaction --no-root ${{ inputs.poetry-install-args }}
-      
-      - name: Install project
-        working-directory: ${{ inputs.working-directory }}
-        run: poetry install --no-interaction
+        run: poetry install --no-interaction ${{ inputs.poetry-install-args }}
       
       - name: Build with Poetry
         working-directory: ${{ inputs.working-directory }}
